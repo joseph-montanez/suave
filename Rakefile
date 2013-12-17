@@ -27,8 +27,10 @@ end
 directory 'build/pkg'
 
 desc "Create a nuget for Suave"
-task :create_nuget => [ 'build/pkg', :versioning, :build] do |p|
-  p = Albacore::NugetModel::Package.new.with_metadata do |m|
+nugets_pack :create_nuget => [ 'build/pkg', :versioning, :build] do |p|
+  p.files = FileList['Suave/suave.fsproj']
+
+  p.with_metadata do |m|
     m.id            = "Suave"
     m.version       = ENV['NUGET_VERSION']
     m.authors       = 'Ademar Gonzalez'
@@ -36,25 +38,26 @@ task :create_nuget => [ 'build/pkg', :versioning, :build] do |p|
     m.language      = 'en-GB'
     m.copyright     = 'Ademar Gonzalez'
     m.release_notes = "Full version: #{ENV['BUILD_VERSION']}."
-    m.license_url       = "https://github.com/ademar/suave/blob/master/COPYING"
-    m.project_url    = "http://suave.io"
+    m.license_url   = "https://github.com/ademar/suave/blob/master/COPYING"
+    m.project_url   = "http://suave.io"
   end
-  p.add_file  "Suave/bin/Release/suave.dll", "lib"
-  p.add_file  "Suave/bin/Release/suave.xml", "lib"
-  p.add_file  "libs/ManagedOpenSsl.dll", "lib"
-  p.add_file  "libs/ManagedOpenSsl.xml", "lib"
-  p.add_file  "libs/ManagedOpenSsl.dll.config", "build/native"
-  p.add_file  "libs/libeay32.dll", "build/native"
-  p.add_file  "libs/ssleay32.dll", "build/native"
-  p.add_file  "libs/libcrypto.so.1.0.0", "build/native"
-  p.add_file  "libs/libssl.so.1.0.0", "build/native"
-  p.add_file  "libs/libcrypto.1.0.0.dylib", "build/native"
-  p.add_file  "libs/libssl.1.0.0.dylib", "build/native"
-  p.add_file  "buildsupport/suave.targets", "build"
-  nuspec_path = 'suave.nuspec'
-  File.write(nuspec_path,p.to_xml)
-  cmd = Albacore::NugetsPack::Cmd.new "buildsupport/NuGet.exe", out: "build/pkg"
-  pkg, spkg = cmd.execute nuspec_path
+
+  p.with_package do |p|
+    p.add_file  "../libs/ManagedOpenSsl.dll", "lib"
+    p.add_file  "../libs/ManagedOpenSsl.xml", "lib"
+    p.add_file  "../libs/ManagedOpenSsl.dll.config", "build/native"
+    p.add_file  "../libs/libeay32.dll", "build/native"
+    p.add_file  "../libs/ssleay32.dll", "build/native"
+    p.add_file  "../libs/libcrypto.so.1.0.0", "build/native"
+    p.add_file  "../libs/libssl.so.1.0.0", "build/native"
+    p.add_file  "../libs/libcrypto.1.0.0.dylib", "build/native"
+    p.add_file  "../libs/libssl.1.0.0.dylib", "build/native"
+    p.add_file  "../buildsupport/suave.targets", "build"
+  end
+
+  p.configuration = 'Release'
+  p.out = 'build/pkg'
+  p.exe = 'buildsupport/NuGet.exe'
 end
 
 desc "Create the assembly info file"
