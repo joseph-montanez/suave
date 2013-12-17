@@ -7,6 +7,8 @@ require 'albacore/task_types/nugets_pack'
 require 'albacore/task_types/asmver'
 require 'albacore/ext/teamcity'
 
+require 'xsemver'
+
 Albacore::Tasks::Versionizer.new :versioning
 
 include ::Albacore::NugetsPack
@@ -74,21 +76,16 @@ def publish_artifact nuspec, nuget
 end
 
 desc "Create the assembly info file"
-task :assembly_info do 
-  x = Albacore::Asmver::Config.new()
+asmver :assembly_info => :versioning do |x|
+  x.attributes assembly_version: ENV['FORMAL_VERSION'],
+    assembly_product: 'Suave.IO',
+    assembly_title: 'Suave.IO Framework',
+    assembly_description: 'Suave is an F# library providing a lightweight web server and a set of combinators to manipulate route flow and task composition.',
+    assembly_copyright: '(c) 2013 by Ademar Gonzalez',
+    auto_open: 'Suave.Utils'
 
-  x.attributes assembly_version: SemVer.find.to_s,
-    assembly_product: "Suave.IO",
-    assembly_title: "Suave.IO Framework",
-    assembly_description: "Suave is an F# library providing a lightweight web server and a set of combinators to manipulate route flow and task composition.",
-    assembly_copyright: "(c) 2013 by Ademar Gonzalez",
-    auto_open: "Suave.Utils"
-
-  x.file_path = "Suave/AssemblyInfo.fs"
+  x.file_path = 'Suave/AssemblyInfo.fs'
   x.namespace = "Suave"
-
-  @task = ::Albacore::Asmver::Task.new(x.opts)
-  @task.execute
 end
 
 task :increase_version_number do
@@ -106,7 +103,6 @@ task :release_next => [ :increase_version_number, :assembly_info , :create_nuget
   system %q[git add .semver]
   system %q[git add Suave/AssemblyInfo.fs]
   system "git commit -m \"released v#{s.to_s}\""
-#  Rake::Tasks['build'].invoke
   system "mono buildsupport/NuGet.exe setApiKey #{ENV['NUGET_KEY']}"
   system "mono buildsupport/NuGet.exe push build/pkg/suave.#{s.to_s}.nupkg"
 end
