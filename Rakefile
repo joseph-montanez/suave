@@ -27,8 +27,8 @@ end
 directory 'build/pkg'
 
 desc "Create a nuget for Suave"
-nugets_pack :create_nuget => [ 'build/pkg', :versioning, :build] do |p|
-  p.files = FileList['Suave/suave.fsproj']
+task :create_nuget => [ 'build/pkg', :versioning, :build] do
+  p = Albacore::NugetModel::Package.new
 
   p.with_metadata do |m|
     m.id            = "Suave"
@@ -42,22 +42,35 @@ nugets_pack :create_nuget => [ 'build/pkg', :versioning, :build] do |p|
     m.project_url   = "http://suave.io"
   end
 
-  p.with_package do |p|
-    p.add_file  "../libs/ManagedOpenSsl.dll", "lib"
-    p.add_file  "../libs/ManagedOpenSsl.xml", "lib"
-    p.add_file  "../libs/ManagedOpenSsl.dll.config", "build/native"
-    p.add_file  "../libs/libeay32.dll", "build/native"
-    p.add_file  "../libs/ssleay32.dll", "build/native"
-    p.add_file  "../libs/libcrypto.so.1.0.0", "build/native"
-    p.add_file  "../libs/libssl.so.1.0.0", "build/native"
-    p.add_file  "../libs/libcrypto.1.0.0.dylib", "build/native"
-    p.add_file  "../libs/libssl.1.0.0.dylib", "build/native"
-    p.add_file  "../buildsupport/suave.targets", "build"
-  end
+  p.add_file  "Suave/bin/Release/suave.dll",    'lib/net45'
+  p.add_file  "Suave/bin/Release/suave.xml",    'lib/net45'
 
-  p.configuration = 'Release'
-  p.out = 'build/pkg'
-  p.exe = 'buildsupport/NuGet.exe'
+  p.add_file  "libs/ManagedOpenSsl.dll",        'lib'
+  p.add_file  "libs/ManagedOpenSsl.xml",        'lib'
+  p.add_file  "libs/ManagedOpenSsl.dll.config", 'build/native'
+  p.add_file  "libs/libeay32.dll",              'build/native'
+  p.add_file  "libs/ssleay32.dll",              'build/native'
+  p.add_file  "libs/libcrypto.so.1.0.0",        'build/native'
+  p.add_file  "libs/libssl.so.1.0.0",           'build/native'
+  p.add_file  "libs/libcrypto.1.0.0.dylib",     'build/native'
+  p.add_file  "libs/libssl.1.0.0.dylib",        'build/native'
+  p.add_file  "buildsupport/suave.targets",     'build'
+
+  File.write 'suave.nuspec', p.to_xml
+
+  cmd = Albacore::NugetsPack::Cmd.new 'buildsupport/NuGet.exe',
+                                      out: "build/pkg"
+
+  pkg, spkg = cmd.execute 'suave.nuspec'
+  publish_artifact 'suave.nuspec', pkg
+end
+
+def publish_artifact nuspec, nuget
+  Albacore.publish :artifact, OpenStruct.new(
+    :nuspec   => nuspec,
+    :nupkg    => nuget,
+    :location => nuget
+  )
 end
 
 desc "Create the assembly info file"

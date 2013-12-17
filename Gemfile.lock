@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/Albacore/albacore.git
-  revision: c04873288c50591b7b296f0e5febdc9369e300ee
+  revision: 50df285888d9f845c37c3599abec24c0bc846384
   branch: clean_slate
   specs:
     albacore (2.0.0.rc.4)
@@ -29,7 +29,7 @@ GEM
     rUtilAnts (2.0.0.20130827)
     rake (10.1.0)
     rubyzip (0.9.9)
-    semver2 (3.3.2)
+    semver2 (3.3.3)
 
 PLATFORMS
   ruby
